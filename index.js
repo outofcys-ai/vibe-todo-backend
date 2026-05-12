@@ -11,10 +11,24 @@ const todoDeleteRouter = require('./routes/todoDelete');
 const todoUpdateRouter = require('./routes/todoUpdate');
 
 const app = express();
-const PORT = Number(process.env.PORT) || 3000;
+// Cloudtype 헬스체크는 "배포 설정의 HTTP 포트"(예: 3000)로 들어옵니다.
+// 환경변수 PORT를 5000 등으로 넣으면 앱만 다른 포트에서 떠서 startup probe가 실패합니다.
+const rawPort = process.env.PORT;
+const parsed = Number(rawPort);
+const PORT =
+  rawPort !== undefined && rawPort !== '' && Number.isFinite(parsed) && parsed > 0
+    ? parsed
+    : 3000;
 const HOST = process.env.HOST || '0.0.0.0';
 const MONGO_URI =
   process.env.MONGO_URI || 'mongodb://localhost:27017/todo-mogodb';
+
+console.log(
+  '[boot] PORT=%s (process.env.PORT=%s) HOST=%s',
+  PORT,
+  JSON.stringify(process.env.PORT),
+  HOST
+);
 
 app.use(cors());
 app.use(express.json());
@@ -37,6 +51,11 @@ mongoose
     console.error('MongoDB 연결 실패:', err.message);
   });
 
-app.listen(PORT, HOST, () => {
-  console.log(`서버 실행 중: http://${HOST}:${PORT}`);
-});
+app
+  .listen(PORT, HOST, () => {
+    console.log(`서버 실행 중: http://${HOST}:${PORT}`);
+  })
+  .on('error', (err) => {
+    console.error('[boot] listen 실패:', err.message);
+    process.exit(1);
+  });

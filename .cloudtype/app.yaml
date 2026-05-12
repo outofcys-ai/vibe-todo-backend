@@ -1,0 +1,11 @@
+# Cloudtype CLI / 저장소 기준 배포 설정 (대시보드와 맞추려면 포트·Node 버전을 동일하게)
+# https://docs.cloudtype.io/guide/templates/node
+name: vibe-todo-backend
+app: node@20
+options:
+  env:
+    - name: NODE_ENV
+      value: production
+  install: npm ci --production
+  ports: 3000/http
+  start: npm start
