@@ -33,6 +33,15 @@ console.log(
 app.use(cors());
 app.use(express.json());
 
+// 브라우저로 배포 URL만 열면 GET / — 이 앱은 API만 있어서 기본은 404였음
+app.get('/', (_req, res) => {
+  res.status(200).json({
+    name: 'vibe-todo-backend',
+    health: '/healthz',
+    todos: '/api/todos',
+  });
+});
+
 // Cloudtype 등 K8s startup probe — DB 연결 전에도 200을 줘야 함
 app.get('/healthz', (_req, res) => {
   res.status(200).send('ok');
