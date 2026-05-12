@@ -17,6 +17,11 @@ const MONGO_URI = process.env.MONGO_URI || "mongodb://localhost:27017/todo-mogod
 app.use(cors());
 app.use(express.json());
 
+// ✅ Health Check 엔드포인트 추가
+app.get('/healthz', (req, res) => {
+  res.send('ok');
+});
+
 mongoose
   .connect(MONGO_URI)
   .then(() => {
