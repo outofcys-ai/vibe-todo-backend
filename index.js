@@ -26,17 +26,12 @@ const MONGO_URI =
 app.use(cors());
 app.use(express.json());
 
-// 헬스체크 라우트 (클라우드타입 startup / liveness probe 용도)
+// 기본 라우트 (API 정보 제공)
 app.get('/', (_req, res) => {
   res.status(200).json({
     name: 'vibe-todo-backend',
-    health: '/healthz',
     todos: '/api/todos',
   });
-});
-
-app.get('/healthz', (_req, res) => {
-  res.status(200).send('ok');
 });
 
 // API 라우트
@@ -45,25 +40,20 @@ app.use('/api/todos', todoGetRouter);
 app.use('/api/todos', todoDeleteRouter);
 app.use('/api/todos', todoUpdateRouter);
 
-// DB 연결 후 서버 실행
-mongoose
-  .connect(MONGO_URI)
-  .then(() => {
-    console.log('데이터 베이스 연결성공');
-    app
-      .listen(PORT, HOST, () => {
-        console.log(`서버 실행 중: http://${HOST}:${PORT}`);
-      })
-      .on('error', (err) => {
-        console.error('[boot] listen 실패:', err.message);
-        process.exit(1);
-      });
-  })
-  .catch((err) => {
-    console.error('MongoDB 연결 실패:', err.message);
-    // DB 연결 실패해도 건강상태 체크를 위해 서버는 올릴 수 있도록 처리
-    app
-      .listen(PORT, HOST, () => {
-        console.log(`서버 실행 중 (DB 미연결): http://${HOST}:${PORT}`);
-      });
-  });
+// 서버를 먼저 실행하여 헬스체크 정상 응답을 보장
+app.listen(PORT, HOST, () => {
+  console.log(`서버 실행 중: http://${HOST}:${PORT}`);
+
+  // 서버가 띄워진 후 DB 연결 시도
+  mongoose
+    .connect(MONGO_URI)
+    .then(() => {
+      console.log('데이터 베이스 연결성공');
+    })
+    .catch((err) => {
+      console.error('MongoDB 연결 실패:', err.message);
+    });
+}).on('error', (err) => {
+  console.error('[boot] listen 실패:', err.message);
+  process.exit(1);
+});
